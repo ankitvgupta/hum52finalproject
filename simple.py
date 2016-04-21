@@ -25,7 +25,7 @@ threads = []
 numpeople = 500
 sells = Queue.PriorityQueue()
 buys = Queue.PriorityQueue()
-startprice = 1
+startprice = 100
 arrlock = threading.Lock()
 money = [np.random.randint(10000) for i in range(numpeople)]
 stock = [np.random.randint(50) for i in range(numpeople)]
@@ -33,7 +33,7 @@ stock = [np.random.randint(50) for i in range(numpeople)]
 print sum(money), max(money), min(money)
 
 lastprice = 10.
-multiplier = .5
+multiplier = .75
 for roundi in range(100):
 	offers = [np.random.normal(multiplier*lastprice, 5) for i in range(numpeople)]
 	sellprices = []
