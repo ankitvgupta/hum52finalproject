@@ -12,40 +12,24 @@ class Contract(object):
 
 
 
-def worker(num, startprice, sellqueue, buyqueue, arrlock):
-	money = np.random.randint(100000)
-	#stock = 0
-	price = startprice
 
-	currentstock = stock[num]
-
-	arrlock.acquire()
-	stock[num] = money
-	arrlock.release()
-
-
-
-	sellqueue.put_nowait((-money, num))
-
-
-threads = []
 numpeople = 500
-sells = Queue.PriorityQueue()
-buys = Queue.PriorityQueue()
 startprice = 1000
-arrlock = threading.Lock()
+
+# Give everyone money, and no one stock
 money = [np.random.randint(10000) for i in range(numpeople)]
 stock = [0 for i in range(numpeople)]
+
+# Add a few growers, who are in depth.
 stock[-2] = 500
 stock[-1] = 150
 money[-2] = -500
 money[-1] = -200
+
+
 multiplier = 1.1
 allcontracts = []
-# for stock_val in range(stock[-2]):
-# 	allcontracts.append(Contract(numpeople-2, numpeople-2, np.random.randint(1, 100), startprice))
-# for stock_val in range(stock[-1]):
-# 	allcontracts.append(Contract(numpeople-1, numpeople-1, np.random.randint(1, 100), startprice))
+
 values = [startprice]
 for iteration in range(100):
 
@@ -53,19 +37,20 @@ for iteration in range(100):
 	print lastprice
 	values = []
 
+	# For each user, if they have any stock, create a contract with someone.
 	for user in range(numpeople):
 		while stock[user] > 0:
 			randomuser = np.random.randint(numpeople)
 			if randomuser == user:
 				continue
 			value = np.random.normal(multiplier*lastprice)
-			allcontracts.append(Contract(user, randomuser, iteration + np.random.randint(1, 100), value))
+			allcontracts.append(Contract(user, randomuser, iteration + np.random.randint(1, 50), value))
 			stock[user] -= 1
 	j = 0
 	while j < len(allcontracts):
 		contract = allcontracts[j]
 		if contract.date == iteration:
-			stock[contract.seller] -= 1
+			#stock[contract.seller] -= 1
 			stock[contract.buyer] += 1
 			money[contract.seller] += contract.price
 			money[contract.buyer] -= contract.price
@@ -84,11 +69,15 @@ for iteration in range(100):
 			money[contract.buyer] += netval
 			money[randomuser] -= netval
 			contract.buyer = randomuser
+			values.append(value)
 		else:
-			money[contract.seller] += netval
-			money[randomuser] -= netval
-			contract.seller = randomuser
-		values.append(value)
+			#pass
+			if stock[randomuser] > 0:
+				money[contract.seller] += netval
+				money[randomuser] -= netval
+				stock[contract.seller] += 1
+				stock[randomuser] -= 1
+				contract.seller = randomuser
 
 
 
@@ -110,10 +99,15 @@ for user in range(numpeople):
 	else:
 		total_unstocked_money += money[user]
 
+num_stockholders =  sum(x > 0 for x in stock)
+num_notstockholders = sum(x == 0 for x in stock)
 print("Wealth of people holding stock", total_stock_money)
 print("Wealth of people not holding stock", total_unstocked_money)
+print("Number of people holding stock",num_stockholders)
+print("Number of people not stock", num_notstockholders)
+print("Average wealth of stockholders", total_stock_money/num_stockholders)
+print("Average wealth of not stockholders", total_unstocked_money/num_notstockholders)
 print("Total wealth", sum(money))
-
 
 #print sum(money), max(money), min(money)
 
